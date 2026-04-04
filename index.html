@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>玉山 Unicard 3.5% 助手 - 穩定修正版</title>
+    <title>玉山 Unicard 3.5% 助手</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -136,9 +136,25 @@
                         <i class="fas fa-plus-circle text-esun-green"></i>新增消費紀錄
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                        <!-- 店家名稱輸入優化：增加搜尋圖示與下拉提示 -->
                         <div class="md:col-span-5">
                             <label class="text-[10px] font-bold text-gray-400 block mb-1 ml-1">店家名稱 / 通路</label>
-                            <input id="storeName" type="text" list="storeDataList" placeholder="搜尋或手輸..." class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 px-4 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                            <div class="relative group">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-colors group-focus-within:text-esun-green">
+                                    <i class="fas fa-search text-xs"></i>
+                                </span>
+                                <input 
+                                    id="storeName" 
+                                    type="text" 
+                                    list="storeDataList" 
+                                    placeholder="搜尋百大特店..." 
+                                    onfocus="this.value=''" 
+                                    class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 pl-10 pr-10 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder:text-gray-300"
+                                >
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-[10px]"></i>
+                                </span>
+                            </div>
                             <datalist id="storeDataList"></datalist>
                         </div>
                         <div class="md:col-span-4">
@@ -268,7 +284,7 @@
             "categories": [
                 { "id": "pay", "name": "行動支付", "merchants": ["玉山Wallet電子支付", "LINE Pay", "全支付", "街口支付", "悠遊付", "全盈+PAY", "iPASS MONEY", "icash Pay"] },
                 { "id": "platform", "name": "電商平台", "merchants": ["momo購物網", "蝦皮購物", "淘寶網", "Coupang酷澎"] },
-                { "id": "deptstore", "name": "國內百貨", "merchants": ["新光三越百貨", "遠東SOGO", "遠東Garden City(大巨蛋)", "台北101", "華泰名品城", "三井OUTLET", "京站", "美麗華", "秀泰生活", "LaLaport", "統領廣場", "采盟", "昇恆昌", "統一時代百貨台北店", "遠東百貨集團", "漢神百貨", "微風百貨", "誠品生活"] },
+                { "id": "deptstore", "name": "國內百貨", "merchants": ["新光三越百貨", "台北101", "華泰名品城", "三井OUTLET", "京站", "美麗華", "秀泰生活", "LaLaport", "統領廣場", "采盟", "昇恆昌", "統一時代百貨台北店", "遠東百貨集團(含遠東SOGO、遠東Garden City(大巨蛋)及遠東百貨)", "漢神百貨(不含漢神巨蛋)、台中漢神洲際購物廣場", "微風百貨", "誠品生活"] },
                 { "id": "lifestyle", "name": "生活採買", "merchants": ["家樂福", "屈臣氏", "康是美", "特力屋", "HOLA", "hoi好好生活", "UNIQLO", "NET", "大樹藥局", "丁丁藥妝"] },
                 { "id": "restaurant", "name": "餐飲美食", "merchants": ["Uber Eats", "foodpanda", "EZTABLE", "王品瘋Pay", "饗賓餐飲", "瓦城料理", "乾杯燒肉", "漢來美食", "鼎王餐飲", "爭鮮餐飲"] },
                 { "id": "traffic", "name": "加油交通", "merchants": ["台灣中油（限直營店）", "55688", "台鐵", "高鐵", "Uber", "Yoxi"] },
@@ -298,7 +314,7 @@
                     datalist.appendChild(opt);
                 });
             }
-            initMockData(); // 確保此時函數已定義
+            initMockData(); 
         }
 
         // 模擬資料初始化
