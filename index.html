@@ -30,6 +30,11 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        
+        /* 針對 datalist 的一些移動端微調 */
+        input::-webkit-calendar-picker-indicator {
+            opacity: 0; /* 隱藏原生箭頭，改用我們的 FontAwesome 箭頭 */
+        }
     </style>
 </head>
 <body class="pb-10">
@@ -136,7 +141,7 @@
                         <i class="fas fa-plus-circle text-esun-green"></i>新增消費紀錄
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                        <!-- 店家名稱輸入優化：增加搜尋圖示與下拉提示 -->
+                        <!-- 店家名稱輸入優化：強化手機端視覺引導 -->
                         <div class="md:col-span-5">
                             <label class="text-[10px] font-bold text-gray-400 block mb-1 ml-1">店家名稱 / 通路</label>
                             <div class="relative group">
@@ -147,8 +152,8 @@
                                     id="storeName" 
                                     type="text" 
                                     list="storeDataList" 
-                                    placeholder="搜尋百大特店..." 
-                                    onfocus="this.value=''" 
+                                    placeholder="搜尋或輸入店家..." 
+                                    onclick="this.select()"
                                     class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 pl-10 pr-10 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder:text-gray-300"
                                 >
                                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
