@@ -3,38 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>玉山 Unicard 3.5% 助手</title>
+    <title>玉山 Unicard 配置小幫手</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
         .esun-green { color: #009874; }
         .bg-esun-green { background-color: #009874; }
         .tab-active { border-bottom: 4px solid #009874 !important; color: #009874 !important; font-weight: 700; }
         
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        .card-inner-shadow { box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05); }
-
-        .category-nav {
-            display: flex;
+        /* 導覽列滾動優化 */
+        .category-nav-container {
+            width: 100%;
             overflow-x: auto;
+            overflow-y: hidden;
             -webkit-overflow-scrolling: touch;
-            scroll-behavior: smooth;
-            border-bottom: 1px solid #f1f5f9;
+            background: white;
+            border-bottom: 1px solid #edf2f7;
+        }
+        
+        .category-nav-content {
+            display: flex;
+            flex-wrap: nowrap;
+            padding: 0 16px;
         }
 
+        .category-tab {
+            flex: 0 0 auto;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .hide-scrollbar::-webkit-scrollbar { height: 4px; }
+        .hide-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .hide-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         
-        /* 針對 datalist 的一些移動端微調 */
-        input::-webkit-calendar-picker-indicator {
-            opacity: 0; /* 隱藏原生箭頭，改用我們的 FontAwesome 箭頭 */
-        }
+        input::-webkit-calendar-picker-indicator { opacity: 0; }
     </style>
 </head>
 <body class="pb-10">
@@ -43,175 +54,130 @@
     <nav class="bg-white border-b sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
-                <div class="w-9 h-9 bg-esun-green rounded-xl flex items-center justify-center text-white shadow-lg shadow-green-100">
-                    <i class="fas fa-credit-card"></i>
+                <div class="w-9 h-9 bg-esun-green rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <i class="fas fa-chart-line"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold text-gray-800 leading-tight">Unicard 配置大師</h1>
-                    <p class="text-[10px] text-gray-400 font-medium">回饋上限：任意選 1K / UP選 5K</p>
+                    <h1 class="text-lg font-bold text-gray-800 leading-tight">Unicard 配置小幫手</h1>
+                    <p class="text-[10px] text-gray-400 font-medium">配置比較：自選 vs 推薦 vs UP選</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="triggerMockData()" class="text-[11px] bg-esun-green text-white px-4 py-2 rounded-xl font-bold hover:brightness-110 transition-all flex items-center gap-2 shadow-md shadow-green-50">
-                    <i class="fas fa-magic"></i> 模擬消費 
-                </button>
-            </div>
+            <button onclick="triggerMockData()" class="text-[11px] bg-esun-green text-white px-4 py-2 rounded-xl font-bold shadow-md hover:brightness-110 transition-all">
+                <i class="fas fa-magic"></i> 模擬隨機消費 
+            </button>
         </div>
     </nav>
 
     <main class="max-w-5xl mx-auto p-4 md:p-6 space-y-6">
-        <!-- Dashboard Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <!-- 預計獲得點數 -->
-            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                <div class="absolute -right-4 -bottom-4 text-gray-50 text-6xl opacity-50"><i class="fas fa-coins"></i></div>
-                <p class="text-xs text-gray-400 mb-1 font-bold">目前預計總獲得點數</p>
-                <div class="flex items-baseline gap-1 text-esun-green relative">
-                    <p id="totalPoints" class="text-4xl font-black">0</p>
+        <!-- 核心收益比較板 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">您的自選配置收益</p>
+                <div class="flex items-baseline gap-1 text-slate-700">
+                    <p id="userPoints" class="text-4xl font-black">0</p>
                     <span class="text-sm font-bold">pt</span>
                 </div>
-            </div>
-            
-            <!-- UP選方案試算 -->
-            <div id="upComparisonCard" class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col relative overflow-hidden transition-all duration-500">
-                <div class="flex items-center justify-between mb-3">
-                    <p class="text-xs text-gray-400 font-bold uppercase tracking-wider">UP 選升級試算</p>
-                    <span class="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold">月費 149pt</span>
-                </div>
-                
-                <div id="upSuggestion" class="text-xs mb-3 font-bold h-8 flex items-center"></div>
-
-                <div class="space-y-1">
-                    <div class="flex justify-between text-[11px]">
-                        <span class="text-gray-500">任意選淨回饋</span>
-                        <span id="currentNet" class="font-bold text-gray-700">0 pt</span>
-                    </div>
-                    <div class="flex justify-between text-[11px]">
-                        <span class="text-gray-500">UP選 (含月費)</span>
-                        <span id="upNet" class="font-bold text-gray-700">0 pt</span>
-                    </div>
-                </div>
+                <div id="userSelectionTag" class="mt-2 inline-block px-2 py-0.5 bg-slate-100 text-[10px] text-slate-500 rounded-md font-bold">已選 0 家</div>
             </div>
 
-            <!-- 加碼回饋進度 (上限追蹤) -->
-            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">加碼上限 (任意選)</p>
-                        <span id="limitLabel" class="text-[10px] font-bold text-orange-600">0 / 1,000</span>
-                    </div>
-                    <div class="bg-gray-100 h-2 rounded-full overflow-hidden mb-4">
-                        <div id="limitProgress" class="bg-orange-500 h-full w-0 transition-all duration-700"></div>
-                    </div>
+            <div id="comparisonCard" class="bg-esun-green p-6 rounded-3xl shadow-xl shadow-green-100 relative overflow-hidden text-white flex flex-col justify-center">
+                <div class="absolute -right-4 -bottom-4 text-white/10 text-7xl"><i class="fas fa-rocket"></i></div>
+                <p class="text-[10px] text-white/80 font-bold uppercase mb-1">改用推薦配置可多賺</p>
+                <div class="flex items-baseline gap-1">
+                    <span class="text-xl font-bold">+</span>
+                    <p id="diffPoints" class="text-4xl font-black">0</p>
+                    <span class="text-sm font-bold">pt</span>
                 </div>
-                <div class="flex-1 bg-orange-50 p-3 rounded-2xl border border-orange-100 flex items-center justify-between mt-auto">
-                    <div>
-                        <p class="text-[10px] text-orange-600 font-bold">加碼部分 (2.5%)</p>
-                        <p id="bonusPoints" class="text-xl font-black text-orange-700">0 pt</p>
-                    </div>
-                    <i class="fas fa-chart-line text-orange-200"></i>
-                </div>
+                <p class="text-[10px] mt-2 text-white/70">最佳化自選名單之潛在收益</p>
             </div>
 
-            <!-- 基礎回饋 -->
-            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex flex-col justify-between">
-                <div>
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2">選 8 大特店數量</p>
-                    <div class="flex items-center justify-between mb-2">
-                        <p id="selectionCount" class="text-2xl font-black text-gray-700">0/8</p>
-                        <button onclick="openModal()" class="text-[10px] text-esun-green font-bold">變更設定 <i class="fas fa-chevron-right"></i></button>
-                    </div>
+            <div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">系統推薦最佳收益</p>
+                <div class="flex items-baseline gap-1 text-esun-green">
+                    <p id="optimizedPoints" class="text-4xl font-black">0</p>
+                    <span class="text-sm font-bold">pt</span>
                 </div>
-                <div class="flex-1 bg-slate-50 p-3 rounded-2xl border border-slate-100 flex items-center justify-between mt-auto">
-                    <div>
-                        <p class="text-[10px] text-slate-500 font-bold">基礎部分 (1.0%)</p>
-                        <p id="basicPoints" class="text-xl font-black text-slate-700">0 pt</p>
-                    </div>
-                    <i class="fas fa-wallet text-slate-200"></i>
-                </div>
+                <div class="mt-2 inline-block px-2 py-0.5 bg-green-50 text-[10px] text-esun-green rounded-md font-bold">自動選取貢獻最高 8 家</div>
             </div>
         </div>
 
-        <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- 左側：輸入與完整清單 -->
             <div class="lg:col-span-7 space-y-6">
-                <!-- Add Transaction -->
                 <section class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6">
                     <h3 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                         <i class="fas fa-plus-circle text-esun-green"></i>新增消費紀錄
                     </h3>
                     <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                        <!-- 店家名稱輸入優化：強化手機端視覺引導 -->
-                        <div class="md:col-span-5">
+                        <div class="md:col-span-5 relative group">
                             <label class="text-[10px] font-bold text-gray-400 block mb-1 ml-1">店家名稱 / 通路</label>
-                            <div class="relative group">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none transition-colors group-focus-within:text-esun-green">
-                                    <i class="fas fa-search text-xs"></i>
-                                </span>
-                                <input 
-                                    id="storeName" 
-                                    type="text" 
-                                    list="storeDataList" 
-                                    placeholder="搜尋或輸入店家..." 
-                                    onclick="this.select()"
-                                    class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 pl-10 pr-10 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder:text-gray-300"
-                                >
-                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 pointer-events-none">
-                                    <i class="fas fa-chevron-down text-[10px]"></i>
-                                </span>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-search text-xs"></i></span>
+                                <input id="storeName" type="text" list="storeDataList" placeholder="搜尋店家..." onclick="this.select()" class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 pl-10 pr-10 text-sm focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300"><i class="fas fa-chevron-down text-[10px]"></i></span>
                             </div>
                             <datalist id="storeDataList"></datalist>
                         </div>
                         <div class="md:col-span-4">
                             <label class="text-[10px] font-bold text-gray-400 block mb-1 ml-1">金額 (TWD)</label>
-                            <input id="amount" type="number" placeholder="消費金額" class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 px-4 text-sm font-black focus:ring-2 focus:ring-green-500 outline-none transition-all">
+                            <input id="amount" type="number" placeholder="金額" class="w-full border-gray-100 bg-gray-50 rounded-2xl py-3 px-4 text-sm font-black focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                         <div class="md:col-span-3 flex items-end">
-                            <button onclick="addTransaction()" class="w-full bg-gray-800 text-white py-3 rounded-2xl font-bold text-sm hover:bg-black transition-all shadow-lg shadow-gray-200">
-                                加入清單
-                            </button>
+                            <button onclick="addTransaction()" class="w-full bg-gray-800 text-white py-3 rounded-2xl font-bold text-sm hover:bg-black transition-all">加入</button>
                         </div>
                     </div>
                 </section>
 
                 <div class="space-y-4">
                     <div class="flex items-center justify-between px-2">
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-2">
                             <h3 class="font-bold text-gray-700 text-sm flex items-center gap-2">
-                                <i class="fas fa-receipt text-gray-400"></i>消費清單
+                                <i class="fas fa-receipt text-gray-400"></i>消費明細
                             </h3>
-                            <span id="transCount" class="text-[10px] bg-white border border-gray-100 px-2 py-1 rounded-lg text-gray-400 font-bold italic">0 RECORDS</span>
+                            <span id="recordCount" class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">共 0 筆資料</span>
                         </div>
-                        <button onclick="clearAllData()" class="text-[10px] bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg font-bold text-red-500 transition-all flex items-center gap-1.5 border border-red-100">
-                            <i class="fas fa-trash-alt"></i> 清除清單
-                        </button>
+                        <button onclick="clearAllData()" class="text-[10px] text-red-500 font-bold px-3 py-1.5 bg-red-50 rounded-lg border border-red-100">清除全部</button>
                     </div>
-                    
+                    <!-- 優化滾動顯示 -->
                     <div id="historyList" class="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar"></div>
                 </div>
             </div>
 
+            <!-- 右側：配置明細 -->
             <div class="lg:col-span-5 space-y-4">
                 <div class="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sticky top-24">
-                    <h3 class="text-sm font-bold text-gray-700 mb-5 border-b border-gray-50 pb-3 flex justify-between items-center">
-                        當前 3.5% 加碼名單 (選8大)
-                        <i class="fas fa-check-double text-esun-green"></i>
-                    </h3>
-                    <div id="activeList" class="space-y-3 min-h-[300px]"></div>
-                    
-                    <div class="mt-6 p-4 bg-amber-50 rounded-2xl border border-amber-100">
-                        <p class="text-[10px] text-amber-700 font-bold flex items-center gap-2">
-                            <i class="fas fa-shield-alt"></i> 回饋上限規則
-                        </p>
-                        <div class="mt-2 space-y-2 text-[10px] text-amber-600 leading-relaxed">
-                            <div class="flex justify-between">
-                                <span>● 任意選加碼：</span>
-                                <span class="font-bold">1,000 pt/月</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span>● UP 選加碼：</span>
-                                <span class="font-bold">5,000 pt/月</span>
-                            </div>
+                    <div class="flex items-center justify-between mb-5 border-b pb-3">
+                        <h3 class="text-sm font-bold text-gray-700">配置對比明細</h3>
+                        <button onclick="openModal()" class="text-[10px] text-esun-green font-bold px-3 py-1 bg-green-50 rounded-full border border-green-100">
+                            修改自選名單 <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-slate-300"></span> 您的自選 8 大 (當前配置)
+                            </p>
+                            <div id="userActiveList" class="grid grid-cols-1 gap-2"></div>
+                        </div>
+
+                        <div class="pt-4 border-t border-dashed">
+                            <p class="text-[10px] font-bold text-esun-green mb-3 flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-esun-green"></span> 系統推薦 8 大 (最佳獲利)
+                            </p>
+                            <div id="optimizedActiveList" class="grid grid-cols-1 gap-2 opacity-80"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t">
+                        <div class="flex items-center justify-between mb-3">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">UP 選方案升級試算</p>
+                            <span class="text-[10px] bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold">月費 149pt</span>
+                        </div>
+                        <div id="upSuggestion" class="text-xs mb-3 font-bold p-3 rounded-2xl border transition-all"></div>
+                        <div class="flex justify-between text-[11px] px-1">
+                            <span class="text-gray-500">UP 選淨收益 (扣月費)</span>
+                            <span id="upNetPoints" class="font-bold text-gray-700">0 pt</span>
                         </div>
                     </div>
                 </div>
@@ -225,59 +191,43 @@
         <div class="bg-white w-full max-w-2xl rounded-[2.5rem] overflow-hidden relative shadow-2xl flex flex-col h-[85vh] max-h-[700px]">
             <div class="p-6 md:p-8 border-b bg-white flex justify-between items-start shrink-0">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">選擇您的 8 大特店</h2>
-                    <p class="text-xs text-gray-400 mt-1">選中之特店將獲得加碼 2.5% (上限 1000 點)</p>
+                    <h2 class="text-xl font-bold text-gray-800">自選您的 8 大特店</h2>
+                    <p class="text-xs text-gray-400 mt-1">基礎 1% + 加碼 2.5% = 3.5% (上限 1000pt)</p>
                 </div>
-                <div class="text-right">
-                    <div class="bg-esun-green/10 text-esun-green px-4 py-2 rounded-2xl text-xs font-black">
-                        已選 <span id="modalCounter">0</span> / 8
-                    </div>
+                <div class="bg-esun-green/10 text-esun-green px-4 py-2 rounded-2xl text-xs font-black">
+                    已選 <span id="modalCounter">0</span> / 8
                 </div>
             </div>
 
-            <div class="bg-white border-b px-4 category-nav custom-scrollbar whitespace-nowrap shrink-0 overflow-x-auto">
-                <button onclick="setCategory('all')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="all">全部</button>
-                <button onclick="setCategory('oversea')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="oversea">國外實體</button>
-                <button onclick="setCategory('others')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="others">精選商家</button>
-                <button onclick="setCategory('pay')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="pay">行動支付</button>
-                <button onclick="setCategory('traffic')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="traffic">交通加油</button>
-                <button onclick="setCategory('esg')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="esg">ESG消費</button>
-                <button onclick="setCategory('deptstore')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="deptstore">國內百貨</button>
-                <button onclick="setCategory('restaurant')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="restaurant">餐飲美食</button>
-                <button onclick="setCategory('travel')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="travel">旅遊航空</button>
-                <button onclick="setCategory('lifestyle')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="lifestyle">量販生活</button>
-                <button onclick="setCategory('platform')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent inline-block" data-cat="platform">電商平台</button>
+            <!-- 修正後的導覽列 -->
+            <div class="category-nav-container hide-scrollbar">
+                <div class="category-nav-content">
+                    <button onclick="setCategory('all')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="all">全部</button>
+                    <button onclick="setCategory('oversea')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="oversea">國外實體</button>
+                    <button onclick="setCategory('others')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="others">精選商家</button>
+                    <button onclick="setCategory('pay')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="pay">行動支付</button>
+                    <button onclick="setCategory('traffic')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="traffic">交通加油</button>
+                    <button onclick="setCategory('esg')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="esg">ESG消費</button>
+                    <button onclick="setCategory('deptstore')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="deptstore">國內百貨</button>
+                    <button onclick="setCategory('restaurant')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="restaurant">餐飲美食</button>
+                    <button onclick="setCategory('travel')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="travel">旅遊航空</button>
+                    <button onclick="setCategory('lifestyle')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="lifestyle">量販生活</button>
+                    <button onclick="setCategory('platform')" class="category-tab px-5 py-4 text-sm font-bold border-b-4 border-transparent" data-cat="platform">電商平台</button>
+                </div>
             </div>
             
-            <div class="p-6 overflow-y-auto bg-gray-50 flex-1 space-y-4 custom-scrollbar" id="modalItemsScroll">
-                <div id="categoryNote" class="bg-blue-50/50 p-4 rounded-2xl border border-blue-100 hidden">
-                    <p class="text-[10px] text-blue-600 font-bold mb-1 italic">📌 分類注意事項：</p>
-                    <ul id="noteList" class="text-[10px] text-blue-800 space-y-1 list-disc pl-4 opacity-70"></ul>
-                </div>
+            <div class="p-6 overflow-y-auto bg-gray-50 flex-1 space-y-4 custom-scrollbar">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="modalItemsList"></div>
             </div>
 
-            <div class="p-6 md:p-8 border-t bg-white flex items-center justify-between shrink-0">
-                <button onclick="autoOptimize()" class="text-orange-500 font-bold text-sm hover:underline">
-                    <i class="fas fa-magic mr-1"></i>依消費自動勾選
+            <div class="p-6 md:p-8 border-t bg-white flex items-center justify-between">
+                <button onclick="autoApplyRecommendation()" class="text-esun-green font-bold text-xs hover:underline">
+                    <i class="fas fa-magic"></i> 一鍵套用推薦名單
                 </button>
                 <div class="flex gap-3">
                     <button onclick="closeModal()" class="px-5 py-3 rounded-2xl text-sm font-bold text-gray-400 hover:bg-gray-100">取消</button>
-                    <button onclick="saveSelection()" class="bg-esun-green text-white px-8 py-3 rounded-2xl text-sm font-black shadow-xl shadow-green-100 hover:brightness-110 active:scale-95 transition-all">套用設定</button>
+                    <button onclick="saveSelection()" class="bg-esun-green text-white px-8 py-3 rounded-2xl text-sm font-black shadow-xl">確認套用自選</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confirm Modal -->
-    <div id="confirmModal" class="fixed inset-0 z-[200] hidden flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onclick="closeConfirm()"></div>
-        <div class="bg-white w-full max-w-sm rounded-[2rem] p-8 relative shadow-2xl text-center">
-            <h3 class="text-lg font-bold text-gray-800">確定要清除所有資料？</h3>
-            <p class="text-sm text-gray-400 mt-2 mb-8 leading-relaxed">此操作將永久刪除所有消費紀錄。</p>
-            <div class="flex flex-col gap-2">
-                <button id="confirmBtn" class="w-full bg-red-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-red-100">確定刪除</button>
-                <button onclick="closeConfirm()" class="w-full py-3 text-sm font-bold text-gray-400 hover:bg-gray-50 rounded-xl">我再想想</button>
             </div>
         </div>
     </div>
@@ -306,134 +256,130 @@
         let transactions = [];
         let currentSelectedMerchants = new Set();
         let tempSelectedMerchants = new Set();
+        let optimizedMerchants = new Set();
         const allMerchantNames = PROMOTION_INFO.categories.flatMap(c => c.merchants);
 
-        // 初始化函數
         function init() {
             const datalist = document.getElementById('storeDataList');
-            if (datalist) {
-                datalist.innerHTML = "";
-                allMerchantNames.forEach(name => {
-                    const opt = document.createElement('option');
-                    opt.value = name;
-                    datalist.appendChild(opt);
-                });
-            }
-            initMockData(); 
-        }
+            allMerchantNames.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                datalist.appendChild(opt);
+            });
 
-        // 模擬資料初始化
-        function initMockData() {
-            const mock = [];
-            const now = Date.now();
-            // 隨機選一些特店
-            for (let i = 0; i < 50; i++) {
-                const randomStore = allMerchantNames[Math.floor(Math.random() * allMerchantNames.length)];
-                const randomAmount = Math.floor(Math.random() * 10000) + 500;
-                mock.push({ id: now + i, store: randomStore, amount: randomAmount });
-            }
-            transactions = mock;
-            autoOptimize(); // 自動選出前 8 大
-            currentSelectedMerchants = new Set(tempSelectedMerchants);
-            updateUI();
+            // 隨機選擇 8 個店家作為初始配置
+            const shuffled = [...allMerchantNames].sort(() => 0.5 - Math.random());
+            currentSelectedMerchants = new Set(shuffled.slice(0, 8));
+
+            triggerMockData();
         }
 
         function triggerMockData() {
-            initMockData();
-            showToast("已重新生成模擬消費紀錄");
+		    clearAllData();
+            const mock = [];
+            const now = Date.now();
+            for (let i = 0; i < 30; i++) {
+                const randomStore = allMerchantNames[Math.floor(Math.random() * allMerchantNames.length)];
+                const randomAmount = Math.floor(Math.random() * 6000) + 100;
+                mock.push({ id: now + i, store: randomStore, amount: randomAmount });
+            }
+            // 每次模擬都疊加而非重設，方便測試大量資料顯示
+            transactions = [...transactions, ...mock];
+            calculateOptimization(); 
+            updateUI();
+            //showToast("模擬資料已增加");
+        }
+
+        function calculateOptimization() {
+            const stats = {};
+            transactions.forEach(t => stats[t.store] = (stats[t.store] || 0) + t.amount);
+            const sorted = Object.entries(stats)
+                .filter(([name]) => allMerchantNames.includes(name))
+                .sort((a,b) => b[1] - a[1])
+                .slice(0, 8);
+            optimizedMerchants = new Set(sorted.map(s => s[0]));
+        }
+
+        function calculatePoints(merchantSet, isUpPlan = false) {
+            let basic = 0;
+            let bonus = 0;
+            const limit = isUpPlan ? LIMIT_UP : LIMIT_ANY;
+            transactions.forEach(t => {
+                basic += t.amount * 0.01;
+                if (isUpPlan) {
+                    if (allMerchantNames.includes(t.store)) bonus += t.amount * 0.035;
+                } else {
+                    if (merchantSet && merchantSet.has(t.store)) bonus += t.amount * 0.025;
+                }
+            });
+            return Math.floor(basic + Math.min(bonus, limit));
         }
 
         function updateUI() {
-            const stats = {};
-            transactions.forEach(t => stats[t.store] = (stats[t.store] || 0) + t.amount);
+            const userTotal = calculatePoints(currentSelectedMerchants);
+            const optimizedTotal = calculatePoints(optimizedMerchants);
+            const upTotalNet = calculatePoints(null, true) - 149;
+            const diff = Math.max(0, optimizedTotal - userTotal);
 
-            let basicPoints = 0;
-            let rawBonusAny = 0;
-            let rawBonusUp = 0;
+            document.getElementById('userPoints').innerText = userTotal.toLocaleString();
+            document.getElementById('optimizedPoints').innerText = optimizedTotal.toLocaleString();
+            document.getElementById('diffPoints').innerText = diff.toLocaleString();
+            document.getElementById('upNetPoints').innerText = `${upTotalNet.toLocaleString()} pt`;
+            document.getElementById('userSelectionTag').innerText = `已選 ${currentSelectedMerchants.size} 家`;
+            document.getElementById('recordCount').innerText = `共 ${transactions.length} 筆資料`;
 
-            transactions.forEach(t => {
-                basicPoints += t.amount * 0.01;
-                
-                // 任意選 2.5%
-                if (currentSelectedMerchants.has(t.store)) {
-                    rawBonusAny += t.amount * 0.025;
-                    t.isBonus = true;
-                } else {
-                    t.isBonus = false;
-                }
-
-                // UP選 3.5% (所有百大特店)
-                if (allMerchantNames.includes(t.store)) {
-                    rawBonusUp += t.amount * 0.035;
-                }
-            });
-
-            // 套用上限
-            const bonusAny = Math.min(rawBonusAny, LIMIT_ANY);
-            const bonusUp = Math.min(rawBonusUp, LIMIT_UP);
-
-            const totalCurrent = Math.floor(basicPoints + bonusAny);
-            const totalUpNet = Math.floor(basicPoints + bonusUp) - 149;
-
-            document.getElementById('totalPoints').innerText = totalCurrent.toLocaleString();
-            document.getElementById('bonusPoints').innerText = `${Math.floor(bonusAny).toLocaleString()} pt`;
-            document.getElementById('basicPoints').innerText = `${Math.floor(basicPoints).toLocaleString()} pt`;
-            document.getElementById('selectionCount').innerText = `${currentSelectedMerchants.size}/8`;
-            
-            const limitPercent = Math.min((bonusAny / LIMIT_ANY) * 100, 100);
-            document.getElementById('limitLabel').innerText = `${Math.floor(bonusAny).toLocaleString()} / ${LIMIT_ANY.toLocaleString()}`;
-            document.getElementById('limitProgress').style.width = `${limitPercent}%`;
-
-            const upSuggestion = document.getElementById('upSuggestion');
-            const upCard = document.getElementById('upComparisonCard');
-            document.getElementById('currentNet').innerText = `${totalCurrent.toLocaleString()} pt`;
-            document.getElementById('upNet').innerText = `${totalUpNet.toLocaleString()} pt`;
-
-            if (totalUpNet > totalCurrent) {
-                upCard.classList.add('border-purple-200', 'bg-purple-50');
-                upSuggestion.innerHTML = `<span class="text-purple-600"><i class="fas fa-check-circle"></i> 建議升級 UP 選(多賺 ${Math.floor(totalUpNet - totalCurrent)} pt)</span>`;
+            const upSug = document.getElementById('upSuggestion');
+            const currentBestAny = Math.max(userTotal, optimizedTotal);
+            if (upTotalNet > currentBestAny) {
+                upSug.className = "text-xs mb-3 font-bold p-3 rounded-2xl border bg-purple-50 border-purple-200 text-purple-600";
+                upSug.innerHTML = `<i class="fas fa-arrow-up"></i> 建議升級 UP 選方案，比目前多賺 ${Math.floor(upTotalNet - userTotal)} pt`;
             } else {
-                upCard.classList.remove('border-purple-200', 'bg-purple-50');
-                upSuggestion.innerHTML = `<span class="text-gray-400"><i class="fas fa-info-circle"></i> 維持目前「任意選」即可</span>`;
+                upSug.className = "text-xs mb-3 font-bold p-3 rounded-2xl border bg-gray-50 border-gray-100 text-gray-400";
+                upSug.innerHTML = `<i class="fas fa-check"></i> 維持目前任意選配置即可`;
             }
 
             const listEl = document.getElementById('historyList');
-            listEl.innerHTML = transactions.length === 0 ? `
-                <div class="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200 text-gray-400">
-                    <p class="text-xs font-bold">尚無消費紀錄</p>
-                </div>` : transactions.slice().reverse().map(t => `
-                <div class="bg-white p-4 rounded-2xl border ${t.isBonus ? 'border-orange-200 ring-2 ring-orange-50' : 'border-gray-50'} flex justify-between items-center group transition-all">
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg flex items-center justify-center ${t.isBonus ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}">
-                            <i class="fas ${t.isBonus ? 'fa-check' : 'fa-receipt'} text-xs"></i>
+            if (transactions.length === 0) {
+                listEl.innerHTML = '<div class="text-center py-20 text-gray-300 italic">尚無紀錄</div>';
+            } else {
+                // 完整顯示所有紀錄，並將最新的排在最前面
+                listEl.innerHTML = transactions.slice().reverse().map(t => {
+                    const inUser = currentSelectedMerchants.has(t.store);
+                    const inOpt = optimizedMerchants.has(t.store);
+                    return `
+                    <div class="bg-white p-4 rounded-2xl border border-gray-50 flex justify-between items-center group transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg flex items-center justify-center ${inUser ? 'bg-orange-500 text-white shadow-lg shadow-orange-100' : 'bg-gray-100 text-gray-400'}">
+                                <i class="fas ${inUser ? 'fa-check' : 'fa-receipt'} text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">${t.store}</p>
+                                <div class="flex gap-1 mt-0.5">
+                                    ${inUser ? '<span class="text-[8px] bg-slate-100 px-1 rounded text-slate-500">自選加碼中</span>' : ''}
+                                    ${inOpt && !inUser ? '<span class="text-[8px] bg-green-50 px-1 rounded text-esun-green">推薦配置包含此項</span>' : ''}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm font-bold text-gray-800">${t.store}</p>
-                            <p class="text-[9px] text-gray-400">${t.isBonus ? '加碼特店' : '基本通路'}</p>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div class="text-right">
-                            <p class="text-sm font-black text-gray-800">$${t.amount.toLocaleString()}</p>
-                        </div>
-                        <button onclick="removeTransaction(${t.id})" class="text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-            `).join('');
+                        <p class="text-sm font-black text-gray-800">$${t.amount.toLocaleString()}</p>
+                    </div>`;
+                }).join('');
+            }
 
-            const selectedList = Array.from(currentSelectedMerchants).map(m => ({ name: m, amount: stats[m] || 0 })).sort((a,b) => b.amount - a.amount);
-            document.getElementById('activeList').innerHTML = selectedList.length > 0 ? selectedList.map(item => `
-                <div class="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100">
-                    <div class="text-xs font-bold text-gray-600">${item.name}</div>
-                    <div class="text-[10px] font-black text-orange-500">+$${Math.floor(item.amount * 0.025).toLocaleString()}</div>
-                </div>
-            `).join('') : '<div class="text-center py-10 text-gray-300 text-xs italic">尚未選擇特店</div>';
-            document.getElementById('transCount').innerText = `${transactions.length} RECORDS`;
-        }
+            const stats = {};
+            transactions.forEach(t => stats[t.store] = (stats[t.store] || 0) + t.amount);
 
-        function removeTransaction(id) {
-            transactions = transactions.filter(t => t.id !== id);
-            updateUI();
+            const renderDetailList = (set, elId, colorClass) => {
+                const list = Array.from(set).map(m => ({ name: m, amount: stats[m] || 0 })).sort((a,b) => b.amount - a.amount);
+                document.getElementById(elId).innerHTML = list.length > 0 ? list.map(item => `
+                    <div class="flex items-center justify-between p-2.5 rounded-xl bg-gray-50/50 border border-gray-100">
+                        <span class="text-[11px] font-bold text-gray-600 truncate mr-2">${item.name}</span>
+                        <span class="text-[10px] font-black shrink-0 ${colorClass}">+$${Math.floor(item.amount * 0.025).toLocaleString()}</span>
+                    </div>
+                `).join('') : '<div class="text-[10px] text-gray-300 italic px-2">尚未選擇</div>';
+            };
+
+            renderDetailList(currentSelectedMerchants, 'userActiveList', 'text-slate-500');
+            renderDetailList(optimizedMerchants, 'optimizedActiveList', 'text-esun-green');
         }
 
         function addTransaction() {
@@ -441,6 +387,7 @@
             const amount = parseFloat(document.getElementById('amount').value);
             if (!store || isNaN(amount) || amount <= 0) return;
             transactions.push({ id: Date.now(), store, amount });
+            calculateOptimization();
             updateUI();
             document.getElementById('storeName').value = '';
             document.getElementById('amount').value = '';
@@ -453,14 +400,10 @@
             document.getElementById('selectionModal').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('selectionModal').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('selectionModal').classList.add('hidden'); }
 
         function setCategory(cat) {
-            document.querySelectorAll('.category-tab').forEach(btn => {
-                btn.classList.toggle('tab-active', btn.dataset.cat === cat);
-            });
+            document.querySelectorAll('.category-tab').forEach(btn => btn.classList.toggle('tab-active', btn.dataset.cat === cat));
             renderModalItems(cat);
         }
 
@@ -468,71 +411,71 @@
             const stats = {};
             transactions.forEach(t => stats[t.store] = (stats[t.store] || 0) + t.amount);
             
-            const catInfo = PROMOTION_INFO.categories.find(c => c.id === cat);
-            let pool = cat === 'all' 
-                ? PROMOTION_INFO.categories.flatMap(c => c.merchants.map(m => ({ name: m, catName: c.name })))
-                : catInfo.merchants.map(m => ({ name: m, catName: catInfo.name }));
+            let pool = [];
+            if (cat === 'all') {
+                pool = Array.from(new Set(PROMOTION_INFO.categories.flatMap(c => c.merchants)));
+            } else {
+                const found = PROMOTION_INFO.categories.find(c => c.id === cat);
+                if (found) pool = found.merchants;
+            }
 
-            document.getElementById('modalItemsList').innerHTML = pool.map(item => {
-                const isSelected = tempSelectedMerchants.has(item.name);
+            document.getElementById('modalItemsList').innerHTML = pool.map(name => {
+                const isSelected = tempSelectedMerchants.has(name);
+                const isRecommended = optimizedMerchants.has(name);
                 return `
-                <div onclick="toggleTempSelection('${item.name}', '${cat}')" class="p-4 rounded-3xl border-2 cursor-pointer transition-all flex justify-between items-center ${isSelected ? 'border-esun-green bg-green-50' : 'border-white bg-white'}">
+                <div onclick="toggleTempSelection('${name}', '${cat}')" class="p-4 rounded-3xl border-2 cursor-pointer transition-all flex justify-between items-center ${isSelected ? 'border-esun-green bg-green-50' : 'border-white bg-white hover:border-gray-100'}">
                     <div class="flex items-center gap-3">
                         <div class="w-6 h-6 rounded-xl border-2 flex items-center justify-center ${isSelected ? 'bg-esun-green border-esun-green text-white' : 'border-gray-100 text-transparent'}">
                             <i class="fas fa-check text-[10px]"></i>
                         </div>
-                        <div><p class="text-xs font-bold text-gray-700 leading-tight">${item.name}</p><span class="text-[9px] text-gray-400">${item.catName}</span></div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-700 leading-tight">${name}</p>
+                            ${isRecommended ? '<span class="text-[9px] text-esun-green font-bold"><i class="fas fa-star text-[8px]"></i> 推薦選取</span>' : '<span class="text-[9px] text-gray-300">非當前主力</span>'}
+                        </div>
                     </div>
-                    <div class="text-xs font-black text-gray-800">$${(stats[item.name] || 0).toLocaleString()}</div>
+                    <div class="text-xs font-black text-gray-800">$${(stats[name] || 0).toLocaleString()}</div>
                 </div>`;
             }).join('');
             document.getElementById('modalCounter').innerText = tempSelectedMerchants.size;
         }
 
-        function toggleTempSelection(name, currentCat) {
+        function toggleTempSelection(name, cat) {
             if (tempSelectedMerchants.has(name)) {
                 tempSelectedMerchants.delete(name);
-            } else {
-                if (tempSelectedMerchants.size >= 8) {
-                    showToast("上限 8 家特店");
-                    return;
-                }
+            } else if (tempSelectedMerchants.size < 8) {
                 tempSelectedMerchants.add(name);
+            } else {
+                showToast("自選上限為 8 家");
             }
-            renderModalItems(currentCat);
+            renderModalItems(cat);
         }
 
-        function autoOptimize() {
-            const stats = {};
-            transactions.forEach(t => stats[t.store] = (stats[t.store] || 0) + t.amount);
-            const sorted = Object.entries(stats)
-                .filter(([name]) => allMerchantNames.includes(name))
-                .sort((a,b) => b[1] - a[1])
-                .slice(0, 8);
-            tempSelectedMerchants = new Set(sorted.map(s => s[0]));
-            const activeTab = document.querySelector('.category-tab.tab-active');
-            if (activeTab) renderModalItems(activeTab.dataset.cat);
+        function autoApplyRecommendation() {
+            tempSelectedMerchants = new Set(optimizedMerchants);
+            const currentTab = document.querySelector('.category-tab.tab-active');
+            const currentCat = currentTab ? currentTab.dataset.cat : 'all';
+            renderModalItems(currentCat);
+            showToast("已勾選推薦名單");
         }
 
         function saveSelection() {
             currentSelectedMerchants = new Set(tempSelectedMerchants);
             updateUI();
             closeModal();
-            showToast("特店設定已生效");
+            showToast("自選配置已套用");
         }
 
         function clearAllData() {
-            const btn = document.getElementById('confirmBtn');
-            btn.onclick = () => { transactions = []; currentSelectedMerchants = new Set(); updateUI(); closeConfirm(); };
-            document.getElementById('confirmModal').classList.remove('hidden');
+            transactions = [];
+            calculateOptimization();
+            updateUI();
+            showToast("所有資料已清除");
         }
-
-        function closeConfirm() { document.getElementById('confirmModal').classList.add('hidden'); }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.innerText = msg; t.style.opacity = '1'; t.style.transform = 'translate(-50%, -20px)';
-            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, 0)'; }, 2000);
+            setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translate(-50%, 0)'; }, 3000);
         }
 
         window.onload = init;
